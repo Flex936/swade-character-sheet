@@ -1,3 +1,4 @@
+import type { Edge } from '$lib/data/edges';
 export const DIE_VALUES = { d4: 1, d6: 2, d8: 3, d10: 4, d12: 5 };
 
 // Map EVERY skill to its governing attribute based on your provided list
@@ -52,7 +53,7 @@ export interface InventoryItem {
 export class Character {
     // --- STATE ---
     attributes = $state({ agility: 1, smarts: 1, spirit: 1, strength: 1, vigor: 1 });
-    
+
     // Initialize ALL skills. Core start at 1 (d4), Optional start at 0 (Untrained)
     skills = $state({
         athletics: 1, commonKnowledge: 1, notice: 1, persuasion: 1, stealth: 1, // Core
@@ -75,6 +76,7 @@ export class Character {
 
     inventory = $state<InventoryItem[]>([]);
 
+    selectedEdges = $state<Edge[]>([]);
     // --- DERIVED STATE ---
     // Automatikusan kiszámolja a felvett hátrányok összértékét, de maximum 4 pontot ad.
     hindrancePointsEarned = $derived.by(() => {
