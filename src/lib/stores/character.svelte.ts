@@ -56,15 +56,22 @@ export class Character {
     });
     
     armor = $state(0);
-    pace = $state(6); 
+    pace = $state(6);
+    
+    selectedHindrances = $state<{ id: string; name: string; cost: number }[]>([]);
 
-    hindrancePointsEarned = $state(0);
     bonusAttributesBought = $state(0);
     bonusEdgesBought = $state(0);
     bonusSkillsBought = $state(0);
     bonusFundsBought = $state(0);
 
     // --- DERIVED STATE ---
+    // Automatikusan kiszámolja a felvett hátrányok összértékét, de maximum 4 pontot ad.
+    hindrancePointsEarned = $derived.by(() => {
+        const total = this.selectedHindrances.reduce((sum, h) => sum + h.cost, 0);
+        return Math.min(total, 4); // Max 4 pont szerezhető
+    });
+
     hindrancePointsSpent = $derived(
         (this.bonusAttributesBought * 2) + (this.bonusEdgesBought * 2) + 
         (this.bonusSkillsBought * 1) + (this.bonusFundsBought * 1)

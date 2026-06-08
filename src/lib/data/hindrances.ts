@@ -1,0 +1,67 @@
+export type HindranceSeverity = 'kisebb' | 'jelentős' | 'kisebb/jelentős';
+
+export interface Hindrance {
+    id: string;
+    name: string;
+    severity: HindranceSeverity;
+    description: string;
+}
+
+export const hindrances: Hindrance[] = [
+    { id: 'alacsony', name: 'Alacsony', severity: 'kisebb', description: 'A méret és a szívósság 1-gyel csökken. A méret nem csökkenhet -1 alá.' },
+    { id: 'balszerencses', name: 'Balszerencsés', severity: 'jelentős', description: 'A hős játékalkalmanként eggyel kevesebb jósággal kezd.' },
+    { id: 'becsuletes', name: 'Becsületes', severity: 'jelentős', description: 'A hős tartja az adott szavát és úriemberként viselkedik.' },
+    { id: 'bizalmatlan', name: 'Bizalmatlan', severity: 'kisebb/jelentős', description: 'A hős üldözési mániás. Jelentős hátrány esetén a szövetségesei 2-vel rosszabbat dobnak, amikor támogatják.' },
+    { id: 'bosszuszomjas', name: 'Bosszúszomjas', severity: 'kisebb/jelentős', description: 'A hős meg akar fizetni az őt ért sérelmekért.' },
+    { id: 'cel', name: 'Cél', severity: 'kisebb/jelentős', description: 'A hős cselekedeteit valamilyen fontos cél vagy meggyőződés hajtja.' },
+    { id: 'csuf', name: 'Csúf', severity: 'kisebb/jelentős', description: 'A hős vonzó és -1 vagy -2 járul a meggyőzéspróbákhoz.' },
+    { id: 'dolyfos', name: 'Dölyfös', severity: 'jelentős', description: 'A hős szereti éreztetni uralmát ellenfelei fölött, harcban a legerősebb ellenfelet választja.' },
+    { id: 'ellenseg', name: 'Ellenség', severity: 'kisebb/jelentős', description: 'A hősnek rendszeresen felbukkanó nemezise van.' },
+    { id: 'elovigyazatos', name: 'Elővigyázatos', severity: 'kisebb', description: 'A hős előzetesen részletesen kidolgozott terveket készít és/vagy túlzottan óvatos.' },
+    { id: 'felszemu', name: 'Félszemű', severity: 'jelentős', description: '-2 az 5"-re (10 yard/méter) vagy még messzebbre lévő feladatokra.' },
+    { id: 'felkaru', name: 'Félkarú', severity: 'jelentős', description: '-4 olyan feladatokra, amelyekhez két kéz szükséges.' },
+    { id: 'fiatal', name: 'Fiatal', severity: 'kisebb/jelentős', description: 'Kevesebb tulajdonság- és képzettségpont, de több jóság.' },
+    { id: 'figyelmetlen', name: 'Figyelmetlen', severity: 'jelentős', description: '-1 az általános ismeret- és az észleléspróbákra.' },
+    { id: 'fobia', name: 'Fóbia', severity: 'kisebb/jelentős', description: 'A hős tart valamitől, aminek a jelenlétében -1 vagy -2 járul minden jellemzőpróbájához.' },
+    { id: 'fogadalom', name: 'Fogadalom', severity: 'kisebb/jelentős', description: 'A hős felesküldött valamilyen ügyre.' },
+    { id: 'gyarlosag', name: 'Gyalróság', severity: 'kisebb', description: 'Valamilyen apró, de makacsul kitartó, a többieket gyakorta bosszantó rossz szokás.' },
+    { id: 'gyava', name: 'Gyáva', severity: 'jelentős', description: '-2 félelempróba a megfélemlítéssel szemben.' },
+    { id: 'halalvagy', name: 'Halálvágy', severity: 'jelentős', description: 'A hős meg akar halni valamilyen hősi cselekedet közben, vagy után.' },
+    { id: 'hebefo', name: 'Hebegő', severity: 'jelentős', description: '-1 a gúnyolódás-, megfélemlítés- és meggyőzéspróbákhoz.' },
+    { id: 'hosiesseg', name: 'Hősiesség', severity: 'jelentős', description: 'A hős mindig segít a rászorulókon.' },
+    { id: 'huseges', name: 'Hűséges', severity: 'kisebb', description: 'A hős hűséges a barátaihoz és a szövetségeseihez.' },
+    { id: 'idos', name: 'Idős', severity: 'jelentős', description: '-1 iram, futás, erő, életerő és ügyesség. +5 képzettségpont.' },
+    { id: 'irastudatlan', name: 'Írástudatlan', severity: 'kisebb', description: 'A hős nem tud írni, sem olvasni.' },
+    { id: 'irigy', name: 'Irigy', severity: 'kisebb/jelentős', description: 'A hős az után sóvárog, ami másoké.' },
+    { id: 'kapzsi', name: 'Kapzsi', severity: 'kisebb/jelentős', description: 'A hős a vagyon és az anyagi javak megszállottja.' },
+    { id: 'ketbalkezes', name: 'Kétbalkezes', severity: 'kisebb', description: '-2 gépi vagy elektromos eszközök használatára.' },
+    { id: 'kivancsi', name: 'Kíváncsi', severity: 'jelentős', description: 'A hős mindent tudni akar.' },
+    { id: 'komisz', name: 'Komisz', severity: 'kisebb', description: '-1 a meggyőzéspróbákra.' },
+    { id: 'konok', name: 'Konok', severity: 'kisebb', description: 'A hős ragaszkodik a maga megoldásaihoz.' },
+    { id: 'konyortelen', name: 'Könyörtelen', severity: 'kisebb/jelentős', description: 'A hős megszeg mindent azért, hogy elérje, amit akar.' },
+    { id: 'korozott', name: 'Körözött', severity: 'kisebb/jelentős', description: 'A hatóságok keresik és üldözik a hőst.' },
+    { id: 'kotelezettseg', name: 'Kötelezettség', severity: 'kisebb/jelentős', description: 'A hősnek egy héten 20 vagy 40 órányi kötelezettsége van.' },
+    { id: 'kover', name: 'Kövér', severity: 'kisebb', description: 'Méret +1, iram -1, és a futáskocka d4.' },
+    { id: 'lassu', name: 'Lassú', severity: 'kisebb/jelentős', description: 'Iram -1, futáskocka alacsonyabb.' },
+    { id: 'locsifecsi', name: 'Locsifecsi', severity: 'kisebb', description: 'A hős képtelen titkot tartani.' },
+    { id: 'masfele', name: 'Másféle', severity: 'kisebb/jelentős', description: '-2 a meggyőzéspróbákra, vagy nincsenek jogai.' },
+    { id: 'meggondolatlan', name: 'Meggondolatlan', severity: 'jelentős', description: 'A hős már ugrik is, mielőtt körülnézne.' },
+    { id: 'meghallo', name: 'Meghalló', severity: 'kisebb/jelentős', description: '-4 hangokkal kapcsolatos észlelésre, vagy teljesen süket.' },
+    { id: 'nema', name: 'Néma', severity: 'jelentős', description: 'A hős nem tud beszélni.' },
+    { id: 'nem_tud_uszni', name: 'Nem tud úszni', severity: 'jelentős', description: '-2 az úszáspróbákra.' },
+    { id: 'onhitt', name: 'Önhitt', severity: 'jelentős', description: 'A hős meggyőződése, hogy mindenre képes.' },
+    { id: 'pacifista', name: 'Pacifista', severity: 'kisebb/jelentős', description: 'Csak önvédelemből harcol, vagy egyáltalán nem.' },
+    { id: 'rossz_szokas', name: 'Rossz szokás', severity: 'kisebb/jelentős', description: 'A hősnek valamilyen függősége van.' },
+    { id: 'rosszul_lato', name: 'Rosszul látó', severity: 'kisebb/jelentős', description: '-1 vagy -2 látással kapcsolatos próbákra.' },
+    { id: 'sertodenyke', name: 'Sértődényke', severity: 'kisebb/jelentős', description: 'Érzékeny a személye elleni támadásokra.' },
+    { id: 'szegeny', name: 'Szegény', severity: 'kisebb/jelentős', description: 'A kezdőösszeg megfeleződik.' },
+    { id: 'szelid', name: 'Szelíd', severity: 'kisebb', description: '-2 a megfélemlítéspróbákra.' },
+    { id: 'szeptikus', name: 'Szeptikus', severity: 'kisebb', description: 'A hős nem hisz a természetfölöttiben.' },
+    { id: 'tetova', name: 'Tétova', severity: 'kisebb', description: 'Két akciólapot húz és az alacsonyabbat használja.' },
+    { id: 'teveszme', name: 'Téveszme', severity: 'kisebb/jelentős', description: 'Valamilyen különös meggyőződés.' },
+    { id: 'titok', name: 'Titok', severity: 'kisebb/jelentős', description: 'A hősnek van valamilyen sötét titka.' },
+    { id: 'ugyetlen', name: 'Ügyetlen', severity: 'jelentős', description: '-2 a lopakodás- és az atlétikapróbákra.' },
+    { id: 'vak', name: 'Vak', severity: 'jelentős', description: '-6 minden látást igénylő feladatra.' },
+    { id: 'verszegeny', name: 'Vérszegény', severity: 'jelentős', description: '-2 életerő fáradtsággal szemben.' },
+    { id: 'verszomjas', name: 'Vérszomjas', severity: 'jelentős', description: 'A hős soha nem ejt foglyokat.' }
+];
