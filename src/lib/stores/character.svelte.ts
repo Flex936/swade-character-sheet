@@ -41,6 +41,14 @@ export const SKILL_LINK = {
 
 export const CORE_SKILLS = ['athletics', 'commonKnowledge', 'notice', 'persuasion', 'stealth'];
 
+export interface InventoryItem {
+    id: string;
+    name: string;
+    price: number;
+    weight: number;
+    quantity: number;
+}
+
 export class Character {
     // --- STATE ---
     attributes = $state({ agility: 1, smarts: 1, spirit: 1, strength: 1, vigor: 1 });
@@ -64,6 +72,8 @@ export class Character {
     bonusEdgesBought = $state(0);
     bonusSkillsBought = $state(0);
     bonusFundsBought = $state(0);
+
+    inventory = $state<InventoryItem[]>([]);
 
     // --- DERIVED STATE ---
     // Automatikusan kiszámolja a felvett hátrányok összértékét, de maximum 4 pontot ad.
@@ -99,10 +109,18 @@ export class Character {
         }
         return total;
     });
-
+    
     attrPointsRemaining = $derived((5 + this.bonusAttributesBought) - this.attrSpent);
     skillPointsRemaining = $derived((12 + this.bonusSkillsBought) - this.skillSpent);
-    funds = $derived(500 + (this.bonusFundsBought * 500));
+    
+    // GAZDASÁG ÉS TEHERBÍRÁS (ÚJ)
+    startingFunds = $derived(500 + (this.bonusFundsBought * 500));
+    spentFunds = $derived(this.inventory.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+    remainingFunds = $derived(this.startingFunds - this.spentFunds);
+
+    // Teherbírás (1 = d4 = 20 font, 2 = d6 = 40 font, stb.)
+    maxWeight = $derived(this.attributes.strength * 20);
+    currentWeight = $derived(this.inventory.reduce((sum, item) => sum + (item.weight * item.quantity), 0));
 
     parry = $derived(2 + (this.skills.fighting === 0 ? 0 : this.skills.fighting + 1));
     toughness = $derived(2 + (this.attributes.vigor + 1) + this.armor);

@@ -4,14 +4,20 @@
 
 @theme {
 	/* Guild Color Palette */
-	--color-guild-base: #1a1614; /* Deep dark brown/black (background) */
-	--color-guild-panel: #2a231f; /* Carved wood (panels) */
-	--color-guild-gold: #cba153; /* Brass/Gold highlights */
-	--color-guild-text: #e2d8c3; /* Aged parchment */
-	--color-guild-muted: #8a7b6b; /* Faded ink */
-	--color-guild-border: #463b33; /* Wood grain / borders */
-	--color-guild-red: #b94b4b; /* Warnings */
-	--color-guild-green: #5c8a5c; /* Success / Money */
+	--color-guild-base: #1a1614;
+	--color-guild-panel: #2a231f;
+	--color-guild-gold: #cba153;
+	--color-guild-text: #e2d8c3;
+	--color-guild-muted: #8a7b6b;
+	--color-guild-border: #463b33;
+	--color-guild-red: #b94b4b;
+	--color-guild-green: #5c8a5c;
+}
+
+/* Global Page Styles & Scrollbar (Firefox Support) */
+html {
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-guild-border) var(--color-guild-base);
 }
 
 body {
@@ -20,18 +26,40 @@ body {
 	font-family: 'Georgia', serif;
 }
 
-/* Custom Scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
+/* Global Scrollbar (WebKit/Blink: Chrome, Brave, Edge, Safari) */
+::-webkit-scrollbar {
 	width: 8px;
+	height: 8px;
 }
-.custom-scrollbar::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
 	background: var(--color-guild-base);
-	border-radius: 4px;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
 	background: var(--color-guild-border);
 	border-radius: 4px;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
 	background: var(--color-guild-gold);
+}
+
+/* Hide Number Input Spinners (Arrows) */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+input[type='number'] {
+	-moz-appearance: textfield;
+	appearance: textfield;
+}
+
+/* Force Firefox to style native select dropdowns */
+select option {
+	background-color: var(--color-guild-base);
+	color: var(--color-guild-text);
+}
+select optgroup {
+	background-color: var(--color-guild-panel);
+	color: var(--color-guild-gold);
+	font-weight: bold;
 }
