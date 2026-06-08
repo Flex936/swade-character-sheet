@@ -1,0 +1,37 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+@theme {
+	/* Guild Color Palette */
+	--color-guild-base: #1a1614; /* Deep dark brown/black (background) */
+	--color-guild-panel: #2a231f; /* Carved wood (panels) */
+	--color-guild-gold: #cba153; /* Brass/Gold highlights */
+	--color-guild-text: #e2d8c3; /* Aged parchment */
+	--color-guild-muted: #8a7b6b; /* Faded ink */
+	--color-guild-border: #463b33; /* Wood grain / borders */
+	--color-guild-red: #b94b4b; /* Warnings */
+	--color-guild-green: #5c8a5c; /* Success / Money */
+}
+
+body {
+	background-color: var(--color-guild-base);
+	color: var(--color-guild-text);
+	font-family: 'Georgia', serif;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+	width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+	background: var(--color-guild-base);
+	border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+	background: var(--color-guild-border);
+	border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+	background: var(--color-guild-gold);
+}
