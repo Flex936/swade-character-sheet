@@ -3,15 +3,14 @@
     import { equipmentList } from '$lib/data/equipment';
 
     let { char }: { char: Character } = $props();
-    
+
     let selectedEquipmentId = $state('');
 
     let groupedEquipment = $derived.by(() => {
         const groups: Record<string, typeof equipmentList> = {};
-        equipmentList.forEach(item => {
-            if (!groups[item.category]) groups[item.category] = [];
-            groups[item.category].push(item);
-        });
+        for (const item of equipmentList) {
+            (groups[item.category] ??= []).push(item);
+        }
         return groups;
     });
 
@@ -20,23 +19,37 @@
         const item = equipmentList.find(e => e.id === selectedEquipmentId);
         if (!item) return;
 
-        const existing = char.inventory.find(i => i.id === item.id);
-        if (existing) {
-            existing.quantity += 1;
+        const existingIdx = char.inventory.findIndex(i => i.id === item.id);
+        if (existingIdx !== -1) {
+            char.inventory[existingIdx].quantity += 1;
         } else {
-            char.inventory = [...char.inventory, { ...item, quantity: 1 }];
+            // ÚJ: Alapból nincs felszerelve (equipped: false) és mentjük a kategóriát
+            char.inventory = [...char.inventory, { 
+                ...item, 
+                quantity: 1, 
+                equipped: false, 
+                category: item.category,
+                notes: item.notes 
+            }];
         }
         selectedEquipmentId = '';
     }
 
     function updateQuantity(id: string, delta: number) {
-        const item = char.inventory.find(i => i.id === id);
-        if (item) {
-            item.quantity += delta;
-            if (item.quantity <= 0) {
-                char.inventory = char.inventory.filter(i => i.id !== id);
-            }
+        const idx = char.inventory.findIndex(i => i.id === id);
+        if (idx === -1) return;
+        const newQty = char.inventory[idx].quantity + delta;
+        if (newQty <= 0) {
+            char.inventory = char.inventory.filter(i => i.id !== id);
+        } else {
+            char.inventory[idx].quantity = newQty;
         }
+    }
+
+    // Segédfüggvény: Csak azt lehet felszerelni, ami fegyver, páncél vagy pajzs
+    function isEquippable(category: string) {
+        const cat = category.toLowerCase();
+        return cat.includes('páncél') || cat.includes('vért') || cat.includes('pajzs') || cat.includes('fegyver') || cat.includes('lézer');
     }
 </script>
 
@@ -87,6 +100,7 @@
             <table class="w-full text-left text-sm">
                 <thead class="bg-guild-border text-guild-gold uppercase tracking-wider">
                     <tr>
+                        <th class="p-3 text-center w-12" title="Felszerelve / Kézben tartva">Equip</th>
                         <th class="p-3">Tárgy</th>
                         <th class="p-3 text-center">Mennyiség</th>
                         <th class="p-3 text-right">Súly (Össz)</th>
@@ -95,12 +109,27 @@
                 </thead>
                 <tbody class="divide-y divide-guild-border">
                     {#each char.inventory as item (item.id)}
-                        <tr class="hover:bg-[#231d1a] transition-colors">
-                            <td class="p-3 font-medium text-guild-text">{item.name}</td>
+                        <tr class="hover:bg-[#231d1a] transition-colors" class:bg-guild-gold={item.equipped} class:bg-opacity-5={item.equipped}>
+                            <td class="p-3 text-center">
+                                {#if isEquippable(item.category)}
+                                    <input 
+                                        type="checkbox" 
+                                        bind:checked={item.equipped} 
+                                        class="rounded bg-guild-panel border-guild-border text-guild-gold focus:ring-guild-gold focus:ring-opacity-50 cursor-pointer w-5 h-5"
+                                        title="Viselés / Használat"
+                                    />
+                                {/if}
+                            </td>
+                            <td class="p-3 font-medium text-guild-text">
+                                {item.name}
+                                {#if item.notes}
+                                    <span class="block text-xs font-normal text-guild-muted mt-0.5">{item.notes}</span>
+                                {/if}
+                            </td>
                             <td class="p-3 text-center">
                                 <div class="flex justify-center items-center gap-3">
-                                    <button onclick={() => updateQuantity(item.id, -1)} class="text-guild-red hover:text-red-400 font-bold px-2 py-0.5 bg-guild-panel rounded border border-guild-border">-</button>
-                                    <span class="w-4">{item.quantity}</span>
+                                    <button onclick={() => updateQuantity(item.id, -1)} class="text-guild-red hover:text-red-400 font-bold px-2 py-0.5 bg-guild-panel rounded border border-guild-border">−</button>
+                                    <span class="w-4 text-center">{item.quantity}</span>
                                     <button onclick={() => updateQuantity(item.id, 1)} class="text-guild-green hover:text-green-400 font-bold px-2 py-0.5 bg-guild-panel rounded border border-guild-border">+</button>
                                 </div>
                             </td>
@@ -119,7 +148,7 @@
     
     {#if char.currentWeight > char.maxWeight}
         <div class="mt-4 p-3 bg-guild-red/20 border border-guild-red rounded text-guild-red text-sm font-bold text-center">
-            Túlterhelt! A karaktered több súlyt cipel, mint amit az Ereje (d{char.attributes.strength * 2 + 2}) elbír. -1 vagy -2 levonást kaphat az Erő és Ügyesség alapú próbákra!
+            Túlterhelt! A karaktered több súlyt cipel, mint amennyit az Ereje (d{char.attributes.strength * 2 + 2}) elbír ({char.maxWeight} font). −1 vagy −2 levonást kaphat az Erő és Ügyesség alapú próbákra!
         </div>
     {/if}
 </section>
