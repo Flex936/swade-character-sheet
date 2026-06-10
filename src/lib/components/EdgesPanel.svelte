@@ -6,8 +6,6 @@
 
     let selectedEdgeId = $state('');
 
-    // Group edges by category for the <optgroup> select — $derived.by keeps
-    // the grouping object stable and reactive.
     let groupedEdges = $derived.by(() => {
         const groups: Record<string, typeof edgesList> = {};
         for (const edge of edgesList) {
@@ -17,10 +15,11 @@
     });
 
     function addEdge() {
-        if (!selectedEdgeId) return;
+        if (!selectedEdgeId || char.hindrancePointsRemaining < 2) return;
+        
         const edge = edgesList.find(e => e.id === selectedEdgeId);
         if (!edge) return;
-        // Guard: prevent adding the same edge twice.
+        
         if (!char.selectedEdges.find(e => e.id === edge.id)) {
             char.selectedEdges = [...char.selectedEdges, edge];
         }
@@ -33,14 +32,8 @@
 </script>
 
 <section class="bg-guild-panel p-6 rounded shadow-xl border border-guild-border">
-    <!-- ── Header with live budget readout ───────────────────────────── -->
-    <!--
-        FIX (Bug #1 + Bug #6): Now that selectedEdges.length * 2 feeds directly
-        into hindrancePointsSpent, this panel shows the live effect on the budget.
-        The player can see exactly how many points edges cost and what remains.
-    -->
     <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-guild-border pb-4 gap-4">
-        <h2 class="text-2xl font-bold text-guild-gold">Előnyök</h2>
+        <h2 class="text-2xl font-bold text-guild-gold">Előnyök (Edges)</h2>
 
         <div class="flex items-center gap-4 bg-guild-base px-4 py-2 rounded border border-guild-border">
             <span class="font-medium text-guild-muted text-sm">
@@ -55,12 +48,11 @@
                 class:text-guild-red={char.hindrancePointsRemaining < 0}
                 class:text-guild-gold={char.hindrancePointsRemaining >= 0}
             >
-                Maradék: {char.hindrancePointsRemaining}
+                Maradék: {char.hindrancePointsRemaining} pont
             </span>
         </div>
     </div>
 
-    <!-- ── Edge picker ────────────────────────────────────────────────── -->
     <div class="mb-6 flex flex-col sm:flex-row gap-4 items-end">
         <div class="flex-1 w-full">
             <label for="edge-select" class="block text-sm font-bold text-guild-muted uppercase tracking-widest mb-2">
@@ -85,10 +77,10 @@
             </select>
         </div>
 
-        <!-- Button label now shows the cost so the player always knows -->
         <button
             onclick={addEdge}
-            disabled={!selectedEdgeId}
+            disabled={!selectedEdgeId || char.hindrancePointsRemaining < 2}
+            title={char.hindrancePointsRemaining < 2 ? 'Nincs elég Hátránypontod! (Szükséges: 2 pt)' : ''}
             class="w-full sm:w-auto bg-guild-gold text-guild-base font-bold py-[10px] px-8 rounded
                    hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                    whitespace-nowrap"
@@ -97,7 +89,6 @@
         </button>
     </div>
 
-    <!-- ── Selected edges list ────────────────────────────────────────── -->
     {#if char.selectedEdges.length > 0}
         <div class="space-y-3">
             {#each char.selectedEdges as edge (edge.id)}
@@ -111,8 +102,6 @@
                     >
                         X
                     </button>
-
-                    <!-- pr-16 reserves space so long names never overlap the X button -->
                     <h3 class="font-bold text-guild-gold text-lg mb-1 pr-16 leading-tight">
                         {edge.name}
                     </h3>

@@ -44,7 +44,7 @@ export interface InventoryItem {
     price: number;
     weight: number;
     quantity: number;
-    equipped: boolean; // ÚJ: Viseli/Kézben tartja-e?
+    equipped: boolean;
     category: string;
     notes?: string;
 }
@@ -107,7 +107,7 @@ export class Character {
             const skillName = skillKey as keyof typeof SKILL_LINK;
             const attrVal   = this.attributes[SKILL_LINK[skillName]];
             const isCore    = CORE_SKILLS.includes(skillName);
-            const startIdx = isCore ? 2 : 1;
+            const startIdx  = isCore ? 2 : 1;
             for (let i = startIdx; i <= currentVal; i++) {
                 total += i <= attrVal ? 1 : 2;
             }
@@ -126,25 +126,32 @@ export class Character {
     maxWeight     = $derived(this.attributes.strength * 20);
     currentWeight = $derived(this.inventory.reduce((s, i) => s + i.weight * i.quantity, 0));
 
-    // ─── AUTOMATIKUS FELSZERELÉS ÉRTELMEZŐ (ÚJ) ──────────────────────────────
-    
-    // 1. Kiszámolja a viselt Hárítás bónuszt (pajzsokból és védjegyfegyverekből)
+    // ─── ENCUMBRANCE PENALTY (NEW) ────────────────────────────────────────────
+    // SWADE rule: exceeding Normal Load gives −1 to STR/AGI rolls;
+    // exceeding 2× Normal Load gives −2.  Displayed in EquipmentPanel and
+    // available for any future system that needs to apply it automatically.
+    encumbrancePenalty = $derived.by(() => {
+        if (this.currentWeight <= this.maxWeight)      return  0;
+        if (this.currentWeight <= this.maxWeight * 2)  return -1;
+        return -2;
+    });
+
+    // ─── AUTOMATIKUS FELSZERELÉS ÉRTELMEZŐ ───────────────────────────────────
+
+    // 1. Viselt Hárítás bónusz (pajzsokból és védjegyfegyverekből)
     equippedParry = $derived.by(() => {
         let bonus = 0;
         for (const item of this.inventory) {
             if (!item.equipped) continue;
-            // Keresi a névben: "+2 Hárítás" vagy "-1 Hárítás"
-            const nameMatch = item.name.match(/([+-]\d+)\s*Hárítás/i);
+            const nameMatch  = item.name.match(/([+-]\d+)\s*Hárítás/i);
             if (nameMatch) bonus += parseInt(nameMatch[1], 10);
-            
-            // Keresi a megjegyzésben: "Hárítás +1" vagy "Hárítás -1"
             const notesMatch = item.notes?.match(/Hárítás\s*([+-]\d+)/i);
             if (notesMatch) bonus += parseInt(notesMatch[1], 10);
         }
         return bonus;
     });
 
-    // 2. Kiszámolja a viselt Páncélzatot (Szívóssághoz)
+    // 2. Viselt Páncélzat (Szívóssághoz)
     equippedArmor = $derived.by(() => {
         let maxNormal = 0;
         let stackable = 0;
@@ -154,34 +161,36 @@ export class Character {
             if (!cat.includes('páncél') && !cat.includes('vért')) continue;
 
             const name = item.name.toLowerCase();
-            // A SWADE alap szívósság a felsőtest páncélzatán alapul.
-            // Kizárjuk a tisztán csak fejet vagy végtagokat védő elemeket.
-            if (name.includes('fej') || name.includes('láb') || name.includes('sapka') || name.includes('sisak') || name.includes('nadrág') || name.includes('karvas')) {
-                continue; 
-            }
+            // Kizárjuk a fejre/végtagokra korlátozott elemeket a Szívósság számításból.
+            if (
+                name.includes('fej') || name.includes('láb') ||
+                name.includes('sapka') || name.includes('sisak') ||
+                name.includes('nadrág') || name.includes('karvas')
+            ) continue;
 
-            // Keresi a "+X" vagy "+X*" értéket
             const match = item.name.match(/\+(\d+)(\*)?/);
             if (match) {
                 const val = parseInt(match[1], 10);
                 if (match[2]) {
-                    stackable += val; // Csillagos páncél (halmozódik)
+                    stackable += val;        // csillagos (halmozódik)
                 } else {
-                    if (val > maxNormal) maxNormal = val; // Sima páncélból csak a legjobb számít
+                    if (val > maxNormal) maxNormal = val; // csak a legjobb számít
                 }
             }
         }
         return maxNormal + stackable;
     });
 
-    // ─── COMBAT STATS ────────────────────────────────────────────────────────
-    
+    // ─── COMBAT STATS ─────────────────────────────────────────────────────────
+    // equippedParry and equippedArmor feed directly into these two formulas,
+    // so the inventory checkboxes are the single source of truth for both.
+
     // Hárítás = 2 + (Közelharc kocka / 2) + Pajzs/Fegyver bónusz
     parry = $derived(
         2 + (this.skills.fighting === 0 ? 0 : this.skills.fighting + 1) + this.equippedParry
     );
 
-    // Szívósság = 2 + (Életerő kocka / 2) + Viselt Páncél + Kézi bónusz
+    // Szívósság = 2 + (Életerő kocka / 2) + Viselt páncél + Kézi bónusz
     toughness = $derived(
         2 + (this.attributes.vigor + 1) + this.equippedArmor + this.armor
     );

@@ -14,23 +14,42 @@
         return groups;
     });
 
-    function addEquipment() {
-        if (!selectedEquipmentId) return;
-        const item = equipmentList.find(e => e.id === selectedEquipmentId);
-        if (!item) return;
+    // ── Fund guards ───────────────────────────────────────────────────────────
+    //
+    // selectedItem: the item currently previewed in the shop picker, or null.
+    // Re-derived whenever selectedEquipmentId changes.
+    let selectedItem = $derived(
+        selectedEquipmentId
+            ? (equipmentList.find(e => e.id === selectedEquipmentId) ?? null)
+            : null
+    );
 
-        const existingIdx = char.inventory.findIndex(i => i.id === item.id);
+    // The Buy button is enabled only when:
+    //   1. An item is actually selected in the dropdown, AND
+    //   2. Its unit price does not exceed the remaining funds.
+    // This prevents purchasing an item the character literally cannot afford.
+    let canBuySelected = $derived(
+        selectedItem !== null && selectedItem.price <= char.remainingFunds
+    );
+
+    // ── Inventory actions ─────────────────────────────────────────────────────
+    function addEquipment() {
+        if (!selectedItem) return;
+
+        const existingIdx = char.inventory.findIndex(i => i.id === selectedItem!.id);
         if (existingIdx !== -1) {
             char.inventory[existingIdx].quantity += 1;
         } else {
-            // ÚJ: Alapból nincs felszerelve (equipped: false) és mentjük a kategóriát
-            char.inventory = [...char.inventory, { 
-                ...item, 
-                quantity: 1, 
-                equipped: false, 
-                category: item.category,
-                notes: item.notes 
-            }];
+            char.inventory = [
+                ...char.inventory,
+                {
+                    ...selectedItem,
+                    quantity: 1,
+                    equipped: false,
+                    category: selectedItem.category,
+                    notes:    selectedItem.notes,
+                },
+            ];
         }
         selectedEquipmentId = '';
     }
@@ -46,27 +65,42 @@
         }
     }
 
-    // Segédfüggvény: Csak azt lehet felszerelni, ami fegyver, páncél vagy pajzs
     function isEquippable(category: string) {
         const cat = category.toLowerCase();
-        return cat.includes('páncél') || cat.includes('vért') || cat.includes('pajzs') || cat.includes('fegyver') || cat.includes('lézer');
+        return (
+            cat.includes('páncél') ||
+            cat.includes('vért')   ||
+            cat.includes('pajzs')  ||
+            cat.includes('fegyver')||
+            cat.includes('lézer')
+        );
     }
 </script>
 
 <section class="bg-guild-panel p-6 rounded shadow-xl border border-guild-border">
+
+    <!-- ── Header stats ───────────────────────────────────────────────────── -->
     <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-guild-border pb-4 gap-4">
         <h2 class="text-2xl font-bold text-guild-gold">Felszerelés és Vagyon</h2>
         <div class="flex flex-wrap gap-4">
             <div class="bg-guild-base px-4 py-2 rounded border border-guild-border">
                 <span class="font-medium text-guild-muted">Súly: </span>
-                <span class="font-bold text-lg" class:text-guild-red={char.currentWeight > char.maxWeight} class:text-guild-text={char.currentWeight <= char.maxWeight}>
+                <span
+                    class="font-bold text-lg"
+                    class:text-guild-red={char.currentWeight > char.maxWeight}
+                    class:text-guild-text={char.currentWeight <= char.maxWeight}
+                >
                     {char.currentWeight}
                 </span>
                 <span class="text-guild-muted"> / {char.maxWeight} font</span>
             </div>
             <div class="bg-guild-base px-4 py-2 rounded border border-guild-border">
                 <span class="font-medium text-guild-muted">Vagyon: </span>
-                <span class="font-bold text-lg" class:text-guild-red={char.remainingFunds < 0} class:text-guild-green={char.remainingFunds >= 0}>
+                <span
+                    class="font-bold text-lg"
+                    class:text-guild-red={char.remainingFunds < 0}
+                    class:text-guild-green={char.remainingFunds >= 0}
+                >
                     ${char.remainingFunds}
                 </span>
                 <span class="text-guild-muted"> (Kezdő: ${char.startingFunds})</span>
@@ -74,10 +108,21 @@
         </div>
     </div>
 
+    <!-- ── Shop picker ────────────────────────────────────────────────────── -->
     <div class="mb-6 flex flex-col sm:flex-row gap-4 items-end">
         <div class="flex-1 w-full">
-            <label for="eq-select" class="block text-sm font-bold text-guild-muted uppercase tracking-widest mb-2">Tárgy vásárlása</label>
-            <select id="eq-select" bind:value={selectedEquipmentId} class="w-full rounded bg-guild-base text-guild-text border-guild-border focus:border-guild-gold focus:ring focus:ring-guild-gold focus:ring-opacity-50">
+            <label
+                for="eq-select"
+                class="block text-sm font-bold text-guild-muted uppercase tracking-widest mb-2"
+            >
+                Tárgy vásárlása
+            </label>
+            <select
+                id="eq-select"
+                bind:value={selectedEquipmentId}
+                class="w-full rounded bg-guild-base text-guild-text border-guild-border
+                       focus:border-guild-gold focus:ring focus:ring-guild-gold focus:ring-opacity-50"
+            >
                 <option value="">-- Böngészés a boltban --</option>
                 {#each Object.entries(groupedEquipment) as [category, items] (category)}
                     <optgroup label={category} class="bg-guild-panel font-bold text-guild-gold">
@@ -90,11 +135,26 @@
                 {/each}
             </select>
         </div>
-        <button onclick={addEquipment} disabled={!selectedEquipmentId} class="w-full sm:w-auto bg-guild-green text-guild-base font-bold py-[10px] px-8 rounded hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+
+        <!--
+            GUARD: disabled when no item is selected OR the item's price exceeds
+            char.remainingFunds.  The tooltip on disabled state explains why.
+        -->
+        <button
+            onclick={addEquipment}
+            disabled={!canBuySelected}
+            title={selectedItem && selectedItem.price > char.remainingFunds
+                ? `Nincs elég pénzed! (Szükséges: $${selectedItem.price})`
+                : ''}
+            class="w-full sm:w-auto bg-guild-green text-guild-base font-bold py-[10px] px-8
+                   rounded hover:bg-green-600 transition-colors
+                   disabled:opacity-50 disabled:cursor-not-allowed"
+        >
             Megvesz
         </button>
     </div>
 
+    <!-- ── Inventory table ────────────────────────────────────────────────── -->
     {#if char.inventory.length > 0}
         <div class="bg-guild-base rounded border border-guild-border overflow-hidden">
             <table class="w-full text-left text-sm">
@@ -109,32 +169,70 @@
                 </thead>
                 <tbody class="divide-y divide-guild-border">
                     {#each char.inventory as item (item.id)}
-                        <tr class="hover:bg-[#231d1a] transition-colors" class:bg-guild-gold={item.equipped} class:bg-opacity-5={item.equipped}>
+                        <tr
+                            class="hover:bg-[#231d1a] transition-colors"
+                            class:bg-guild-gold={item.equipped}
+                            class:bg-opacity-5={item.equipped}
+                        >
+                            <!-- Equip checkbox (only for wearable/holdable items) -->
                             <td class="p-3 text-center">
                                 {#if isEquippable(item.category)}
-                                    <input 
-                                        type="checkbox" 
-                                        bind:checked={item.equipped} 
-                                        class="rounded bg-guild-panel border-guild-border text-guild-gold focus:ring-guild-gold focus:ring-opacity-50 cursor-pointer w-5 h-5"
+                                    <input
+                                        type="checkbox"
+                                        bind:checked={item.equipped}
+                                        class="rounded bg-guild-panel border-guild-border text-guild-gold
+                                               focus:ring-guild-gold focus:ring-opacity-50 cursor-pointer w-5 h-5"
                                         title="Viselés / Használat"
                                     />
                                 {/if}
                             </td>
+
+                            <!-- Item name + notes -->
                             <td class="p-3 font-medium text-guild-text">
                                 {item.name}
                                 {#if item.notes}
-                                    <span class="block text-xs font-normal text-guild-muted mt-0.5">{item.notes}</span>
+                                    <span class="block text-xs font-normal text-guild-muted mt-0.5">
+                                        {item.notes}
+                                    </span>
                                 {/if}
                             </td>
+
+                            <!-- Quantity stepper -->
                             <td class="p-3 text-center">
                                 <div class="flex justify-center items-center gap-3">
-                                    <button onclick={() => updateQuantity(item.id, -1)} class="text-guild-red hover:text-red-400 font-bold px-2 py-0.5 bg-guild-panel rounded border border-guild-border">−</button>
+                                    <button
+                                        onclick={() => updateQuantity(item.id, -1)}
+                                        class="text-guild-red hover:text-red-400 font-bold px-2 py-0.5
+                                               bg-guild-panel rounded border border-guild-border"
+                                    >−</button>
+
                                     <span class="w-4 text-center">{item.quantity}</span>
-                                    <button onclick={() => updateQuantity(item.id, 1)} class="text-guild-green hover:text-green-400 font-bold px-2 py-0.5 bg-guild-panel rounded border border-guild-border">+</button>
+
+                                    <!--
+                                        GUARD: disabled when buying one more unit of
+                                        this item would exceed the remaining funds.
+                                        The player can always remove items (−) but
+                                        cannot add beyond their budget.
+                                    -->
+                                    <button
+                                        onclick={() => updateQuantity(item.id, 1)}
+                                        disabled={item.price > char.remainingFunds}
+                                        title={item.price > char.remainingFunds
+                                            ? `Nincs elég pénzed! (Szükséges: $${item.price})`
+                                            : ''}
+                                        class="text-guild-green hover:text-green-400 font-bold px-2 py-0.5
+                                               bg-guild-panel rounded border border-guild-border
+                                               disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >+</button>
                                 </div>
                             </td>
-                            <td class="p-3 text-right text-guild-muted">{item.weight * item.quantity} font</td>
-                            <td class="p-3 text-right text-guild-red font-medium">-${item.price * item.quantity}</td>
+
+                            <td class="p-3 text-right text-guild-muted">
+                                {item.weight * item.quantity} font
+                            </td>
+                            <td class="p-3 text-right text-guild-red font-medium">
+                                -${item.price * item.quantity}
+                            </td>
                         </tr>
                     {/each}
                 </tbody>
@@ -145,10 +243,27 @@
             A hátizsákod üres. Vásárolj felszerelést a fenti listából!
         </div>
     {/if}
-    
-    {#if char.currentWeight > char.maxWeight}
-        <div class="mt-4 p-3 bg-guild-red/20 border border-guild-red rounded text-guild-red text-sm font-bold text-center">
-            Túlterhelt! A karaktered több súlyt cipel, mint amennyit az Ereje (d{char.attributes.strength * 2 + 2}) elbír ({char.maxWeight} font). −1 vagy −2 levonást kaphat az Erő és Ügyesség alapú próbákra!
-        </div>
+
+    <!-- ── Encumbrance warning ────────────────────────────────────────────── -->
+    <!--
+        Uses char.encumbrancePenalty (new $derived in Character) which returns
+        0, −1, or −2 according to SWADE carry-weight tiers.
+        Showing the exact penalty value avoids any ambiguity for the GM.
+    -->
+    {#if char.encumbrancePenalty < 0}
+        {#if char.encumbrancePenalty === -1}
+            <div class="mt-4 p-3 bg-guild-red/20 border border-guild-red rounded
+                        text-guild-red text-sm font-bold text-center">
+                ⚠ Túlterhelt! ({char.currentWeight} / {char.maxWeight} font)
+                — <span class="underline">−1 az Erő és Ügyesség</span> alapú próbákra.
+            </div>
+        {:else}
+            <div class="mt-4 p-3 bg-guild-red/30 border-2 border-guild-red rounded
+                        text-guild-red text-sm font-bold text-center">
+                ⛔ Erősen túlterhelt! ({char.currentWeight} / {char.maxWeight} font)
+                — <span class="underline">−2 az Erő és Ügyesség</span> alapú próbákra.
+            </div>
+        {/if}
     {/if}
+
 </section>
